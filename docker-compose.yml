@@ -1,0 +1,107 @@
+services:
+  postgres:
+    container_name: tutuplapak-postgres
+    image: postgres:15-alpine
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file: .env
+    networks:
+      - tutuplapak-network
+    healthcheck:
+      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      retries: 5
+      timeout: 5s
+
+  minio:
+    container_name: tutuplapak-minio
+    image: minio/minio:latest
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    env_file: .env
+    networks:
+      - tutuplapak-network
+    healthcheck:
+      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      retries: 5
+      timeout: 20s
+  
+  redis:
+    container_name: tutuplapak-redis
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT}:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASS}
+    volumes:
+      - redis_data:/data
+    env_file: .env
+    networks:
+      - tutuplapak-network
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASS}
+    healthcheck:
+      interval: 10s
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS}", "ping"]
+      timeout: 5s
+      retries: 3
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tutuplapak-user
+    ports:
+      - "${APP_PORT}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    env_file: .env
+    networks:
+      - tutuplapak-network
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_CONSOLE_PORT: ${MINIO_CONSOLE_PORT}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      APP_ENVS: ${APP_ENVS}
+      APP_PORT: ${APP_PORT}
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+    healthcheck:
+      interval: 30s
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/v1/health-check"]
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  tutuplapak-network:
+    driver: bridge
