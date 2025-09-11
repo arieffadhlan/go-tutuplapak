@@ -13,13 +13,13 @@ type (
 
 	AuthEmailResponse struct {
 		Token string `json:"token"`
-    Email string `json:"email"`
-		Phone string `json:"phone,omitempty"`
+		Email string `json:"email"`
+		Phone string `json:"phone"`
 	}
 
 	AuthPhoneResponse struct {
 		Token string `json:"token"`
-    Phone string `json:"phone"`
-		Email string `json:"email,omitempty"`
+		Phone string `json:"phone"`
+		Email string `json:"email"`
 	}
 )
