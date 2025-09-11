@@ -7,6 +7,10 @@ import (
 	"syscall"
 	"time"
 	"tutuplapak-user/internal/config"
+	"tutuplapak-user/internal/handlers"
+	"tutuplapak-user/internal/repository"
+	"tutuplapak-user/internal/route"
+	"tutuplapak-user/internal/services"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -15,12 +19,12 @@ import (
 func main() {
 	cfg, err := config.LoadsAllAppConfig()
 	if err != nil {
-		 log.Fatal(err)
+		log.Fatal(err)
 	}
-	
+
 	dbs, err := config.InitsDBConnection()
 	if err != nil {
-		 log.Fatal(err)
+		log.Fatal(err)
 	}
 	defer config.CloseDBConnection(dbs)
 
@@ -39,7 +43,7 @@ func RunServer(app *fiber.App, cfg *config.Config) {
 
 	go func() {
 		if err := app.Listen(cfg.App.Port); err != nil {
-			 log.Fatalf("Failed to start server: %v", err)
+			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
@@ -50,38 +54,38 @@ func RunServer(app *fiber.App, cfg *config.Config) {
 	defer cancel()
 
 	if err := app.ShutdownWithContext(timeoutCtx); err != nil {
-		 log.Fatal("Server forced to shutdown: ", err)
+		log.Fatal("Server forced to shutdown: ", err)
 	}
 
 	log.Println("Server exited")
 }
 
 func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
-	v1 := app.Group("/v1")
+	v1 := app.Group("/api/v1")
 
 	v1.Get("/health-check", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "Ok"})
 	})
 
-	// userRepo := repository.NewUserRepository(db)
+	userRepo := repository.NewUserRepository(db)
 	// fileRepo := repository.NewFileRepository(db)
 	// productsRepo := repository.NewProductsRepository(db)
 	// purchaseRepo := repository.NewPurchaseRepository(db)
 
-	// userService := service.NewUserService(userRepo)
-	// authService := service.NewAuthService(userRepo)
+	authService := services.NewAuthService(userRepo)
+	// userService := services.NewUserService(userRepo)
 	// fileService := service.NewFileService(fileRepo)
 	// productsService := service.NewProductsService(productsRepo)
 	// purchaseService := service.NewPurchaseService(purchaseRepo)
 
-	// userHandler := handler.NewUserHandler(userUseCase)
-	// authHandler := handler.NewAuthHandler(authUseCase)
+	authHandler := handlers.NewAuthHandler(authService)
+	// userHandler := handlers.NewUserHandler(userService)
 	// fileHandler := handler.NewFileHandler(fileUseCase)
 	// productsHandler := handler.NewProductsHandler(productsUseCase)
 	// purchaseHandler := handler.NewPurchaseHandler(purchaseUseCase)
 
+	route.RegisterAuthRoutes(v1, authHandler)
 	// route.RegisterUserRoutes(v1, userHandler)
-	// route.RegisterAuthRoutes(v1, authHandler)
 	// route.RegisterFileRoutes(v1, fileHandler)
 	// route.RegisterProductsRoutes(v1, productsHandler)
 	// route.RegisterPurchaseRoutes(v1, purchaseHandler)
