@@ -30,7 +30,7 @@ migrate-make:
 	@if [ -z "$(name)" ]; then \
 		echo "Please provide a migration name. Example: make migrate-new-docker name=create_users_table"; \
 	else \
-		$(GOOSE_CMD) -dir $(MIGRATIONS_DIR) create create_$(name)_table sql; \
+		$(GOOSE) -dir $(MIGRATIONS_DIR) create create_$(name)_table sql; \
 	fi
 
 migrate-status:
