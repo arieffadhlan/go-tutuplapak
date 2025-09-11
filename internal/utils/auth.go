@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"os"
 	"strconv"
 	"time"
 	"tutuplapak-user/internal/entities"
@@ -50,5 +51,5 @@ func GenerateJWTToken(user entities.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte("your-secret-key"))
+	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }

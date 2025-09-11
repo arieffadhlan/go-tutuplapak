@@ -137,3 +137,37 @@ func (h AuthHandler) RegisterByEmail(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(authResp)
 }
+
+func (h AuthHandler) RegisterByPhone(c *fiber.Ctx) error {
+	input := dto.AuthPhoneRequest{}
+
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on register request", "data": err})
+	}
+
+	if !isPhone(input.Phone) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Invalid phone format"})
+	}
+
+	tkn, user, err := h.service.RegisterByPhone(c.Context(), input)
+	if err != nil {
+		if errors.Is(err, services.ErrUserAlreadyExists) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "User already exists"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// In your handler
+	var emailValue string
+	if user.Email != nil {
+		emailValue = *user.Email
+	}
+
+	authResp := dto.AuthPhoneResponse{
+		Email: emailValue,
+		Phone: *user.Phone,
+		Token: tkn,
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(authResp)
+}

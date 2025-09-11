@@ -62,7 +62,7 @@ func (r UserRepository) GetUserByPhone(ctx context.Context, phone string) (user 
 func (r UserRepository) RegisterByEmail(ctx context.Context, req dto.AuthEmailRequest) (user entities.User, err error) {
 	publicID := uuid.New().String()
 
-	hashedPassword, err := utils.HashPassword(user.Password)
+	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return
 	}
@@ -74,6 +74,29 @@ func (r UserRepository) RegisterByEmail(ctx context.Context, req dto.AuthEmailRe
     `
 
 	err = r.db.QueryRowContext(ctx, query, publicID, req.Email, hashedPassword).Scan(&user.Email, &user.Phone, &user.PublicId)
+
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (r UserRepository) RegisterByPhone(ctx context.Context, req dto.AuthPhoneRequest) (user entities.User, err error) {
+	publicID := uuid.New().String()
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return
+	}
+
+	query := `
+        INSERT INTO users (public_id, phone, password) 
+        VALUES ($1, $2, $3)
+        RETURNING email, phone, public_id
+    `
+
+	err = r.db.QueryRowContext(ctx, query, publicID, req.Phone, hashedPassword).Scan(&user.Email, &user.Phone, &user.PublicId)
 
 	if err != nil {
 		return
