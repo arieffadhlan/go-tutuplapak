@@ -8,11 +8,13 @@ import (
 	"time"
 	"tutuplapak-user/internal/config"
 	"tutuplapak-user/internal/handlers"
+	"tutuplapak-user/internal/middleware"
 	"tutuplapak-user/internal/repository"
 	"tutuplapak-user/internal/route"
 	"tutuplapak-user/internal/services"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -61,10 +63,14 @@ func RunServer(app *fiber.App, cfg *config.Config) {
 }
 
 func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
-	v1 := app.Group("/api/v1")
+	v1 := app.Group("/api/v1", logger.New())
 
 	v1.Get("/health-check", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "Ok"})
+	})
+
+	v1.Get("/protected-route", middleware.Protected(), func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"status": "Ok", "message": "Protected route"})
 	})
 
 	userRepo := repository.NewUserRepository(db)
