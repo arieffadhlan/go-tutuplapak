@@ -2,6 +2,8 @@ package utils
 
 import (
 	"strconv"
+	"time"
+	"tutuplapak-user/internal/entities"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -26,4 +28,27 @@ func ValidToken(t *jwt.Token, id string) bool {
 	uid := int(claims["user_id"].(float64))
 
 	return uid == n
+}
+
+// Tambahkan fungsi ini ke dalam file services/auth.go
+
+// generateJWTToken membuat token JWT berdasarkan data user
+func GenerateJWTToken(user entities.User) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": user.PublicId,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
+
+	// Tambahkan email jika tersedia
+	if user.Email != nil {
+		claims["email"] = user.Email
+	}
+
+	// Tambahkan phone jika tersedia
+	if user.Phone != nil {
+		claims["phone"] = user.Phone
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte("your-secret-key"))
 }

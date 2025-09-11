@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"errors"
 
+	"tutuplapak-user/internal/dto"
 	"tutuplapak-user/internal/entities"
+	"tutuplapak-user/internal/utils"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -48,6 +51,29 @@ func (r UserRepository) GetUserByPhone(ctx context.Context, phone string) (user 
 	if err == sql.ErrNoRows {
 		return entities.User{}, ErrUserNotFound
 	}
+
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (r UserRepository) RegisterByEmail(ctx context.Context, req dto.AuthEmailRequest) (user entities.User, err error) {
+	publicID := uuid.New().String()
+
+	hashedPassword, err := utils.HashPassword(user.Password)
+	if err != nil {
+		return
+	}
+
+	query := `
+        INSERT INTO users (public_id, email, password) 
+        VALUES ($1, $2, $3)
+        RETURNING email, phone, public_id
+    `
+
+	err = r.db.QueryRowContext(ctx, query, publicID, req.Email, hashedPassword).Scan(&user.Email, &user.Phone, &user.PublicId)
 
 	if err != nil {
 		return

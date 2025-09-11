@@ -3,19 +3,18 @@ package services
 import (
 	"context"
 	"errors"
-	"time"
 	"tutuplapak-user/internal/dto"
 	"tutuplapak-user/internal/entities"
 	"tutuplapak-user/internal/utils"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 var ErrInvalidCredentials = errors.New("invalid identity or password")
+var ErrUserAlreadyExists = errors.New("user already exists")
 
 type repoContract interface {
 	GetUserByEmail(ctx context.Context, email string) (entities.User, error)
 	GetUserByPhone(ctx context.Context, phone string) (entities.User, error)
+	RegisterByEmail(ctx context.Context, req dto.AuthEmailRequest) (entities.User, error)
 }
 
 type AuthService struct {
@@ -37,13 +36,7 @@ func (s AuthService) LoginByEmail(c context.Context, req dto.AuthEmailRequest) (
 		return "", entities.User{}, ErrInvalidCredentials
 	}
 
-	claims := jwt.MapClaims{
-		"user_id": user.PublicId,
-		"email":   user.Email,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tkn, err = token.SignedString([]byte("your-secret-key"))
+	tkn, err = utils.GenerateJWTToken(user)
 	if err != nil {
 		return "", user, err
 	}
@@ -62,13 +55,27 @@ func (s AuthService) LoginByPhone(c context.Context, req dto.AuthPhoneRequest) (
 		return "", entities.User{}, ErrInvalidCredentials
 	}
 
-	claims := jwt.MapClaims{
-		"user_id": user.PublicId,
-		"phone":   user.Phone,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	tkn, err = utils.GenerateJWTToken(user)
+	if err != nil {
+		return "", user, err
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tkn, err = token.SignedString([]byte("your-secret-key"))
+
+	return tkn, user, nil
+}
+
+func (s AuthService) RegisterByEmail(c context.Context, req dto.AuthEmailRequest) (tkn string, user entities.User, err error) {
+
+	user, err = s.repo.GetUserByEmail(c, req.Email)
+	if user.Email != nil {
+		return "", entities.User{}, ErrUserAlreadyExists
+	}
+
+	user, err = s.repo.RegisterByEmail(c, req)
+	if err != nil {
+		return "", entities.User{}, err
+	}
+
+	tkn, err = utils.GenerateJWTToken(user)
 	if err != nil {
 		return "", user, err
 	}
