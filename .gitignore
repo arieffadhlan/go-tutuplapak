@@ -26,3 +26,4 @@ go.work.sum
 
 # ignore custom makefile
 Makefile.*
+.air/

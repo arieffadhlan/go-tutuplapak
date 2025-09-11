@@ -21,7 +21,7 @@ logs:
 .PHONY: migrate-push migrate-down migrate-make migrate-status
 
 migrate-push:
-	$(GOOSE) -dir $(MIGRATIONS_DIR) postgres "$(DbUrl)" push
+	$(GOOSE) -dir $(MIGRATIONS_DIR) postgres "$(DbUrl)" up
 
 migrate-down:
 	$(GOOSE) -dir $(MIGRATIONS_DIR) postgres "$(DbUrl)" down

@@ -1,6 +1,4 @@
-// package route
-
-// import "github.com/gofiber/fiber/v2"
+package route
 
 // func RegisterUserRoutes(router fiber.Router, userHandler handler.UserHandler) {
 // 	router.Use(middleware.Authenticate())

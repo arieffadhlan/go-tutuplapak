@@ -34,7 +34,7 @@ func InitsDBConnection() (*sqlx.DB, error) {
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.Name,
 	)
 
-	db,err := sqlx.Open("postgres", dsn)
+	db, err := sqlx.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
