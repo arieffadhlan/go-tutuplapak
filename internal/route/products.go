@@ -1,12 +1,17 @@
 package route
 
-// import "github.com/gofiber/fiber/v2"
+import (
+	"tutuplapak-user/internal/handlers"
+	"tutuplapak-user/internal/middleware"
 
-// func RegisterProductsRoutes(router fiber.Router, productHandler handler.ProductHandler) {
-// router.Get("/product", productHandler.GetProduct)
+	"github.com/gofiber/fiber/v2"
+)
 
-// privateRouter := router.Use(middleware.Authenticate())
-// privateRouter.Post("/product", productHandler.CreateProduct)
-// privateRouter.Post("/product/:productId", productHandler.UpdateProduct)
-// privateRouter.Post("/product/:productId", productHandler.DeleteProduct)
-// }
+func RegisterProductsRoutes(router fiber.Router, productHandler *handlers.ProductsHandler) {
+	router.Get("/product", productHandler.GetAllProducts)
+
+	privateRouter := router.Use(middleware.Protected())
+	privateRouter.Post("/product", productHandler.CreateProduct)
+	privateRouter.Put("/product/:productId", productHandler.UpdateProduct)
+	privateRouter.Delete("/product/:productId", productHandler.DeleteProduct)
+}

@@ -75,13 +75,13 @@ func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
 
 	userRepo := repository.NewUserRepository(db)
 	// fileRepo := repository.NewFileRepository(db)
-	// productsRepo := repository.NewProductsRepository(db)
+	productsRepo := repository.NewProductsRepository(db)
 	// purchaseRepo := repository.NewPurchaseRepository(db)
 
 	authService := services.NewAuthService(userRepo)
 	// userService := services.NewUserService(userRepo)
 	// fileService := service.NewFileService(fileRepo)
-	// productsService := service.NewProductsService(productsRepo)
+	productsService := services.NewProductsService(productsRepo)
 	// purchaseService := service.NewPurchaseService(purchaseRepo)
 
 	authHandler := handlers.NewAuthHandler(authService)
@@ -92,11 +92,13 @@ func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
 	fileRouter.Post("/", fileHandler.Post)
 
 	// productsHandler := handler.NewProductsHandler(productsUseCase)
+	// fileHandler := handler.NewFileHandler(fileUseCase)
+	productsHandler := handlers.NewProductsHandler(productsService)
 	// purchaseHandler := handler.NewPurchaseHandler(purchaseUseCase)
 
 	route.RegisterAuthRoutes(v1, authHandler)
 	// route.RegisterUserRoutes(v1, userHandler)
 	// route.RegisterFileRoutes(v1, fileHandler)
-	// route.RegisterProductsRoutes(v1, productsHandler)
+	route.RegisterProductsRoutes(v1, productsHandler)
 	// route.RegisterPurchaseRoutes(v1, purchaseHandler)
 }
