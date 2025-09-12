@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -101,4 +102,10 @@ func IsAllowedFileType(fileName, fileType string) bool {
 	}
 
 	return true
+}
+
+func AddFileNameSuffix(filename string) string {
+	ext := filepath.Ext(filename)
+	name := strings.TrimSuffix(filename, ext)
+	return fmt.Sprintf("%s_thumbnail%s", name, ext)
 }
