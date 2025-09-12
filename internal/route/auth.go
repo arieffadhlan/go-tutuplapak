@@ -12,5 +12,4 @@ func RegisterAuthRoutes(router fiber.Router, authHandler handlers.AuthHandler) {
 
 	router.Post("/register/email", authHandler.RegisterByEmail)
 	router.Post("/register/phone", authHandler.RegisterByPhone)
-	// router.Post("/login/email", userHandler.LoginByEmail)
 }
