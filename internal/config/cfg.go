@@ -16,5 +16,6 @@ func LoadsAllAppConfig() (*Config, error) {
 	return &Config{
 		App:      loadAppConfig(),
 		Database: loadDatabaseConfig(),
+		Minio:    loadMinioConfig(),
 	}, nil
 }
