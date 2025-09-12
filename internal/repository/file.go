@@ -15,7 +15,7 @@ type repository struct {
 	db *sqlx.DB
 }
 
-func newFileRepository(db *sqlx.DB) FileRepositoryInterface {
+func NewFileRepository(db *sqlx.DB) FileRepositoryInterface {
 	return &repository{db: db}
 }
 

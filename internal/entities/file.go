@@ -12,6 +12,13 @@ type MinioConfig struct {
 	UseSSL          bool
 }
 
+type File struct {
+	ID           int    `db:"id"`
+	Url          string `db:"url"`
+	ThumbnailUrl string `db:"thumbnail_url"`
+	CreateAt     string `db:"created_at"`
+}
+
 func NewUploader(cfg *MinioConfig) (*minio.Client, error) {
 	// Initialize minio client object.
 	minioClient, err := minio.New(cfg.Endpoint, &minio.Options{

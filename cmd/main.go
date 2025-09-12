@@ -86,7 +86,11 @@ func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
 
 	authHandler := handlers.NewAuthHandler(authService)
 	// userHandler := handlers.NewUserHandler(userService)
-	// fileHandler := handler.NewFileHandler(fileUseCase)
+	fileUseCase := services.NewUseCase(*cfg, repository.NewFileRepository(db))
+	fileHandler := handlers.NewFileHandler(fileUseCase)
+	fileRouter := v1.Group("activity")
+	fileRouter.Post("/", fileHandler.Post)
+
 	// productsHandler := handler.NewProductsHandler(productsUseCase)
 	// purchaseHandler := handler.NewPurchaseHandler(purchaseUseCase)
 
