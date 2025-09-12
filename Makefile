@@ -5,7 +5,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 GOOSE = goose
-DbUrl = postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+DbUrl = postgres://$(DB_USER):$(DB_PASS)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 MIGRATIONS_DIR = migrations
 
 up:
