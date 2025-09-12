@@ -104,3 +104,117 @@ func (r UserRepository) RegisterByPhone(ctx context.Context, req dto.AuthPhoneRe
 
 	return
 }
+
+func (r UserRepository) GetUserByPublicId(ctx context.Context, publicId string) (user entities.User, err error) {
+	query := `
+        SELECT id, public_id, email, phone, file_id, file_uri, file_thumbnail_uri, 
+               bank_account_name, bank_account_holder, bank_account_number, 
+               created_at, updated_at 
+        FROM users WHERE public_id = $1
+    `
+
+	err = r.db.GetContext(ctx, &user, query, publicId)
+	if err == sql.ErrNoRows {
+		return entities.User{}, ErrUserNotFound
+	}
+
+	return
+}
+
+func (r UserRepository) LinkEmail(ctx context.Context, publicId, email string) error {
+	query := `UPDATE users SET email = $1, updated_at = NOW() WHERE public_id = $2`
+
+	result, err := r.db.ExecContext(ctx, query, email, publicId)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
+func (r UserRepository) LinkPhone(ctx context.Context, publicId, phone string) error {
+	query := `UPDATE users SET phone = $1, updated_at = NOW() WHERE public_id = $2`
+
+	result, err := r.db.ExecContext(ctx, query, phone, publicId)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
+func (r UserRepository) UpdateUser(ctx context.Context, publicId string, req dto.UpdateUserRequest) error {
+	query := `
+        UPDATE users SET 
+            file_id = COALESCE($1, file_id),
+            bank_account_name = COALESCE($2, bank_account_name),
+            bank_account_holder = COALESCE($3, bank_account_holder),
+            bank_account_number = COALESCE($4, bank_account_number),
+            updated_at = NOW()
+        WHERE public_id = $5
+    `
+
+	result, err := r.db.ExecContext(ctx, query,
+		req.FileId,
+		req.BankAccountName,
+		req.BankAccountHolder,
+		req.BankAccountNumber,
+		publicId)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
+func (r UserRepository) CheckEmailExists(ctx context.Context, email string) (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM users WHERE email = $1`
+
+	err := r.db.GetContext(ctx, &count, query, email)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (r UserRepository) CheckPhoneExists(ctx context.Context, phone string) (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM users WHERE phone = $1`
+
+	err := r.db.GetContext(ctx, &count, query, phone)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
