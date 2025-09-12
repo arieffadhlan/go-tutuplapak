@@ -10,14 +10,13 @@ import (
 	"tutuplapak-user/internal/dto"
 	"tutuplapak-user/internal/entities"
 	"tutuplapak-user/internal/repository"
-	"tutuplapak-user/internal/utils"
 	minioUploader "tutuplapak-user/internal/utils"
 
 	"github.com/minio/minio-go/v7"
 )
 
 type UseCase interface {
-	UploadFile(context.Context, *multipart.FileHeader, multipart.File, string) (*dto.File, error)
+	UploadFile(context.Context, *multipart.FileHeader, multipart.File, string) (*dto.FileResponse, error)
 }
 
 type useCase struct {
@@ -43,9 +42,9 @@ func NewUseCase(config config.Config, fileRepository repository.FileRepositoryIn
 	}
 }
 
-func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, src multipart.File, fileName string) (*dto.File, error) {
+func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, src multipart.File, fileName string) (*dto.FileResponse, error) {
 	bucketName := uc.config.Minio.BucketName
-
+	fileNameCompress := minioUploader.AddFileNameSuffix(fileName)
 	// compress file
 	srcForCompress, err := file.Open()
 	if err != nil {
@@ -55,7 +54,7 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 
 	img, _, _ := image.Decode(srcForCompress)
 
-	compressedBytes, contentType, _ := utils.CompressThumbnail(file, img, 10)
+	compressedBytes, contentType, _ := minioUploader.CompressThumbnail(file, img, 10)
 
 	// upload the original
 	_, err = uc.minio.PutObject(
@@ -71,10 +70,11 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 		return nil, err
 	}
 
+	// upload for the thumbnail
 	_, err = uc.minio.PutObject(
 		ctx,
 		bucketName,
-		"compressed_"+fileName,
+		fileNameCompress,
 		bytes.NewReader(compressedBytes),
 		int64(len(compressedBytes)),
 		minio.PutObjectOptions{ContentType: contentType},
@@ -90,7 +90,7 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 		return nil, err
 	}
 	// get url thumbnail
-	thumbUrl, err := uc.minio.PresignedGetObject(ctx, bucketName, "compressed_"+fileName, time.Hour*24*7, nil)
+	thumbUrl, err := uc.minio.PresignedGetObject(ctx, bucketName, fileNameCompress, time.Hour*24*7, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -111,10 +111,9 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 		return nil, err
 	}
 
-	return &dto.File{
+	return &dto.FileResponse{
 		ID:           res.ID,
 		Url:          res.Url,
 		ThumbnailUrl: res.ThumbnailUrl,
-		CreateAt:     res.CreateAt,
 	}, nil
 }
