@@ -70,7 +70,9 @@ func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
 	})
 
 	v1.Get("/protected-route", middleware.Protected(), func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "Ok", "message": "Protected route"})
+		userId := c.Locals("userId").(string)
+
+		return c.JSON(fiber.Map{"status": "Ok", "message": "Protected route", "userId": userId})
 	})
 
 	userRepo := repository.NewUserRepository(db)
