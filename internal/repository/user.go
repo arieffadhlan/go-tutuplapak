@@ -25,7 +25,7 @@ var ErrUserNotFound = errors.New("user not found")
 
 func (r UserRepository) GetUserByEmail(ctx context.Context, email string) (user entities.User, err error) {
 	query := `
-        SELECT email, phone, password, public_id FROM users WHERE email = $1
+        SELECT email, phone, password, id FROM users WHERE email = $1
     `
 	// err = r.db.GetContext(ctx, &user, query, email)
 	err = r.db.QueryRowContext(ctx, query, email).Scan(&user.Email, &user.Phone, &user.Password, &user.PublicId)
@@ -43,7 +43,7 @@ func (r UserRepository) GetUserByEmail(ctx context.Context, email string) (user 
 
 func (r UserRepository) GetUserByPhone(ctx context.Context, phone string) (user entities.User, err error) {
 	query := `
-        SELECT email, phone, password, public_id FROM users WHERE phone = $1
+        SELECT email, phone, password, id FROM users WHERE phone = $1
     `
 
 	err = r.db.QueryRowContext(ctx, query, phone).Scan(&user.Email, &user.Phone, &user.Password, &user.PublicId)

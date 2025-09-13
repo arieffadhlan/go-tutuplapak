@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     public_id UUID NOT NULL UNIQUE,
     email VARCHAR(255) UNIQUE,
     phone VARCHAR(255) UNIQUE,

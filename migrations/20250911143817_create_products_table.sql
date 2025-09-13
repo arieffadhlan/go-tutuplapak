@@ -10,16 +10,16 @@ CREATE TYPE product_category AS ENUM (
 );
 
 CREATE TABLE products (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(32) NOT NULL DEFAULT '',
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  file_id INT REFERENCES files(id),
-  sku VARCHAR(32) NOT NULL DEFAULT '',
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  file_id UUID REFERENCES files(id),
+  sku VARCHAR(32) UNIQUE NOT NULL,
   qty INT NOT NULL DEFAULT 0,
   price INT NOT NULL DEFAULT 0,
+  category product_category NOT NULL,
   file_uri TEXT NOT NULL DEFAULT '',
   file_thumbnail_uri TEXT NOT NULL DEFAULT '',
-  category product_category NOT NULL DEFAULT 'Food',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
