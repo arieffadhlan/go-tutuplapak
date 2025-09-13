@@ -13,8 +13,8 @@ type ProductResponse struct {
 	Qty              int       `json:"qty" db:"qty"`
 	Price            int       `json:"price" db:"price"`
 	Category         string    `json:"category" db:"category"`
-	FileURI          string    `json:"file_uri" db:"file_uri"`
-	FileThumbnailURI string    `json:"file_thumbnail_uri" db:"file_thumbnail_uri"`
+	FileURI          string    `json:"fileUri" db:"file_uri"`
+	FileThumbnailURI string    `json:"fileThumbnailUri" db:"file_thumbnail_uri"`
 	Name             string    `json:"name" db:"name"`
 	CreatedAt        time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt        time.Time `db:"updated_at" json:"updated_at"`
