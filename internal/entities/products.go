@@ -8,9 +8,9 @@ import (
 
 type Product struct {
 	ID               uuid.UUID `db:"id" json:"id"`
-	Name             string    `db:"name" json:"name"`
 	UserID           uuid.UUID `db:"user_id" json:"user_id"`
 	FileID           uuid.UUID `db:"file_id" json:"file_id"`
+	Name             string    `db:"name" json:"name"`
 	SKU              string    `db:"sku" json:"sku"`
 	Qty              int       `db:"qty" json:"qty"`
 	Price            int       `db:"price" json:"price"`

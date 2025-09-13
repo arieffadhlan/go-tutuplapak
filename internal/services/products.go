@@ -22,13 +22,17 @@ func (s *ProductsService) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllProduc
 	rs, err := s.repository.GetAllProducts(ctx, params) 
 	if err != nil {
 		 return nil, err
-	} else {
-		 return rs, nil
 	}
+
+	if len(rs) == 0 {
+		 return []dto.ProductResponse{}, nil
+	}
+
+	return rs, nil
 }
 
 func (s *ProductsService)CreateProduct(ctx *fiber.Ctx, req dto.CreateProductRequest) (dto.CreateProductResponse, error) {
-	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.SKU); err != nil {
+	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.ProdID, req.SKU); err != nil {
 		 return dto.CreateProductResponse{}, err
 	}
 	
@@ -45,7 +49,7 @@ func (s *ProductsService)UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProductRequ
 		 return dto.UpdateProductResponse{}, err
 	}
 
-	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.SKU); err != nil {
+	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.ProdID, req.SKU); err != nil {
 		 return dto.UpdateProductResponse{}, err
 	}
 	

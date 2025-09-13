@@ -67,10 +67,10 @@ func (r *ProductsRepository) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllPro
 	}
 
 	sortMap := map[string]string{
-		"newest":   "updated_at DESC",
-		"oldest":   "updated_at ASC",
-		"expensiv": "price DESC",
-		"cheapest": "price ASC",
+		"newest":    "updated_at DESC",
+		"oldest":    "updated_at ASC",
+		"expensive": "price DESC",
+		"cheapest":  "price ASC",
 	}
 	orderBy, ok := sortMap[params.SortBy]
 	if !ok {
@@ -109,6 +109,8 @@ func (r *ProductsRepository) CreateProduct(ctx *fiber.Ctx, req dto.CreateProduct
       qty,
       price,
       category,
+			file_uri,
+			file_thumbnail_uri,
       created_at,
       updated_at
     ) VALUES (
@@ -119,6 +121,8 @@ func (r *ProductsRepository) CreateProduct(ctx *fiber.Ctx, req dto.CreateProduct
       $5,
       $6,
       $7,
+      $8,
+      $9,
       NOW(),
       NOW()
     )
@@ -134,6 +138,8 @@ func (r *ProductsRepository) CreateProduct(ctx *fiber.Ctx, req dto.CreateProduct
 		req.Qty,
 		req.Price,
 		req.Category,
+		req.FileURI,
+		req.FileThumbnailURI,
 	)
 
 	if err != nil {
@@ -154,8 +160,10 @@ func (r *ProductsRepository) UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProduct
 		    qty = $5,
 		    price = $6,
 		    category = $7,
+				file_uri = $8,
+				file_thumbnail_uri = $9,
 		    updated_at = NOW()
-		WHERE id = $8
+		WHERE id = $10
 		RETURNING id, name, file_id, sku, qty, price, category, file_uri, file_thumbnail_uri, created_at, updated_at
 	`
 
@@ -168,6 +176,8 @@ func (r *ProductsRepository) UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProduct
 		req.Qty,
 		req.Price,
 		req.Category,
+		req.FileURI,
+		req.FileThumbnailURI,
 		req.ProdID,
 	)
 
@@ -201,21 +211,24 @@ func (r *ProductsRepository) DeleteProduct(ctx *fiber.Ctx, userId uuid.UUID, pro
 	return nil
 }
 
-func (r *ProductsRepository) CheckSKUExist(ctx *fiber.Ctx, userId uuid.UUID, sku string) error {
+func (r *ProductsRepository) CheckSKUExist(ctx *fiber.Ctx, userId uuid.UUID, prodId uuid.UUID, sku string) error {
 	query := `
-		SELECT EXISTS(
-			SELECT 1 
-			FROM products 
-			WHERE user_id = $1 AND sku = $2)
+		SELECT id
+		FROM products 
+		WHERE user_id = $1 AND sku = $2
+		LIMIT 1
 	`
 
-	var ext bool
+	var ext uuid.UUID
 	err := r.db.GetContext(ctx.Context(), &ext, query, userId, sku)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
 		return utils.NewInternal("fail to check sku")
 	}
-	
-	if ext {
+
+	if ext != prodId {
 		return utils.NewConflict("sku already exist")
 	}
 
