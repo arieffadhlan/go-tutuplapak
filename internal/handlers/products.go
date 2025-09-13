@@ -13,12 +13,14 @@ import (
 )
 
 type ProductsHandler struct {
-	service *services.ProductsService
+	prodService *services.ProductsService
+	fileService services.UseCase
 }
 
-func NewProductsHandler(service *services.ProductsService) *ProductsHandler {
+func NewProductsHandler(prodService *services.ProductsService, fileService services.UseCase) *ProductsHandler {
 	return &ProductsHandler{
-		service: service,
+		prodService: prodService,
+		fileService: fileService,
 	}
 }
 
@@ -45,32 +47,32 @@ func (h *ProductsHandler) GetAllProducts(c *fiber.Ctx) error {
 	}
 	
 	var sku string
-	var ctg string
 	var sortBy string
+	var category string
 	
 	if val := c.Query("sku"); val != "" {
 		 sku = val
 	}
 
-	if val := c.Query("ctg"); val != "" {
+	if val := c.Query("category"); val != "" {
 		allowedCategories := map[string]bool{
-			"Foods":     true,
+			"Food":      true,
 			"Tools":     true,
-			"Beverages": true,
+			"Beverage":  true,
 			"Furniture": true,
 			"Clothes":   true,
 		}
 		if allowedCategories[val] {
-			 ctg = val
+			 category = val
 		}
 	}
 
 	if sby := c.Query("sortBy"); sby != "" {
 		validVal := map[string]bool{
-			"newest":   true,
-			"oldest":   true,
-			"cheapest": true,
-			"expensiv": true,
+			"newest":    true,
+			"oldest":    true,
+			"cheapest":  true,
+			"expensive": true,
 		}
 		if validVal[strings.ToLower(sby)] {
 			 sortBy = strings.ToLower(sby)
@@ -82,11 +84,11 @@ func (h *ProductsHandler) GetAllProducts(c *fiber.Ctx) error {
 		Offset:    offset,
 		ProductID: productId,
 		SKU:       sku,
-		Category:  ctg,
 		SortBy:    sortBy,
+		Category:  category,
 	}
 
-	products, err := h.service.GetAllProducts(c, params)
+	products, err := h.prodService.GetAllProducts(c, params)
 	if err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
@@ -106,7 +108,7 @@ func (h *ProductsHandler) CreateProduct(c *fiber.Ctx) error {
 	}
 
 	if err := validator.New().Struct(request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	userIdStr, ok := c.Locals("userId").(string)
@@ -121,7 +123,15 @@ func (h *ProductsHandler) CreateProduct(c *fiber.Ctx) error {
 
 	request.UserID = userIdUid
 
-	r, err := h.service.CreateProduct(c, request)
+	file, err := h.fileService.GetFileById(c, request.FileID)
+	if err != nil {
+		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	request.FileURI = file.Url
+	request.FileThumbnailURI = file.ThumbnailUrl
+
+	r, err := h.prodService.CreateProduct(c, request)
 	if err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
@@ -164,7 +174,15 @@ func (h *ProductsHandler) UpdateProduct(c *fiber.Ctx) error {
 	request.ProdID = productId
 	request.UserID = userIdUid
 
-	r, err := h.service.UpdateProduct(c, request)
+	file, err := h.fileService.GetFileById(c, request.FileID)
+	if err != nil {
+		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	request.FileURI = file.Url
+	request.FileThumbnailURI = file.ThumbnailUrl
+
+	r, err := h.prodService.UpdateProduct(c, request)
 	if err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
@@ -194,7 +212,7 @@ func (h *ProductsHandler) DeleteProduct(c *fiber.Ctx) error {
 		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
-	if err := h.service.DeleteProduct(c, productId, userIdUid); err != nil {
+	if err := h.prodService.DeleteProduct(c, productId, userIdUid); err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
 			} else {
@@ -202,5 +220,5 @@ func (h *ProductsHandler) DeleteProduct(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.SendStatus(fiber.StatusNoContent)
+	return c.SendStatus(fiber.StatusOK)
 }

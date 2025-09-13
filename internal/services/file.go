@@ -12,10 +12,13 @@ import (
 	"tutuplapak-user/internal/repository"
 	minioUploader "tutuplapak-user/internal/utils"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )
 
 type UseCase interface {
+	GetFileById(ctx *fiber.Ctx, id uuid.UUID) (*dto.FileResponse, error)
 	UploadFile(context.Context, *multipart.FileHeader, multipart.File, string) (*dto.FileResponse, error)
 }
 
@@ -39,6 +42,15 @@ func NewUseCase(config config.Config, fileRepository repository.FileRepositoryIn
 		config:         config,
 		minio:          minioClient,
 		fileRepository: fileRepository,
+	}
+}
+
+func (uc *useCase) GetFileById(ctx *fiber.Ctx, id uuid.UUID) (*dto.FileResponse, error) {
+	res, err := uc.fileRepository.GetFileById(ctx, id)
+	if err != nil {
+		return nil, err
+	} else {
+		return res, nil
 	}
 }
 
