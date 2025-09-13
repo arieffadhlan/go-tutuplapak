@@ -1,10 +1,10 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS files (
-  id bigserial primary key,
-  url text NOT NULL,
-  thumbnail_url text NOT NULL,
-  created_at timestamptz NOT NULL default current_timestamp
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  url TEXT NOT NULL,
+  thumbnail_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 )
 -- +goose StatementEnd
 

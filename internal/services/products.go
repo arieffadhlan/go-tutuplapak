@@ -5,6 +5,7 @@ import (
 	"tutuplapak-user/internal/repository"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type ProductsService struct {
@@ -17,39 +18,54 @@ func NewProductsService(repository *repository.ProductsRepository) *ProductsServ
 	}
 }
 
-func (s *ProductsService)GetAllProducts(ctx *fiber.Ctx, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
-	r, err := s.repository.GetAllProducts(ctx, params)
+func (s *ProductsService) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
+	rs, err := s.repository.GetAllProducts(ctx, params) 
 	if err != nil {
-		return nil, err
+		 return nil, err
 	} else {
-    return r, nil
-  }
+		 return rs, nil
+	}
 }
 
-func (s *ProductsService)CreateProduct(ctx *fiber.Ctx, req dto.CreateProductRequest, userId int) (dto.CreateProductResponse, error) {
-	r, err := s.repository.CreateProduct(ctx, req, userId)
+func (s *ProductsService)CreateProduct(ctx *fiber.Ctx, req dto.CreateProductRequest) (dto.CreateProductResponse, error) {
+	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.SKU); err != nil {
+		 return dto.CreateProductResponse{}, err
+	}
+	
+	rs,err := s.repository.CreateProduct(ctx, req)
 	if err != nil {
-		return dto.CreateProductResponse{}, err
+		 return rs, err
 	} else {
-    return r, nil
-  }
+		 return rs, nil
+	}
 }
 
-func (s *ProductsService)UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProductRequest, userId int, id int) (dto.UpdateProductResponse, error) {
-	r, err := s.repository.UpdateProduct(ctx, req, userId, id)
+func (s *ProductsService)UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProductRequest) (dto.UpdateProductResponse, error) {
+	if err := s.repository.CheckPrdOwner(ctx, req.UserID, req.ProdID); err != nil {
+		 return dto.UpdateProductResponse{}, err
+	}
+
+	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.SKU); err != nil {
+		 return dto.UpdateProductResponse{}, err
+	}
+	
+	rs,err := s.repository.UpdateProduct(ctx, req)
 	if err != nil {
-		return dto.UpdateProductResponse{}, err
+		 return rs, err
 	} else {
-    return r, nil
-  }
+		 return rs, nil
+	}
 }
 
-
-func (s *ProductsService) DeleteProduct(ctx *fiber.Ctx, id int) error {
-	err := s.repository.DeleteProduct(ctx, id)
+func (s *ProductsService)DeleteProduct(ctx *fiber.Ctx, prodId uuid.UUID, userId uuid.UUID) error {
+	if err := s.repository.CheckPrdOwner(ctx, userId, prodId); err != nil {
+		 return err
+	}
+	
+	err := s.repository.DeleteProduct(ctx, userId, prodId)
 	if err != nil {
-		return err
+		 return err
 	} else {
-		return nil
+		 return nil
 	}
 }
