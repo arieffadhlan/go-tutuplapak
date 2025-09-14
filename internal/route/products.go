@@ -10,8 +10,7 @@ import (
 func RegisterProductsRoutes(router fiber.Router, productHandler *handlers.ProductsHandler) {
 	router.Get("/product", productHandler.GetAllProducts)
 
-	privateRouter := router.Use(middleware.Protected())
-	privateRouter.Post("/product", productHandler.CreateProduct)
-	privateRouter.Put("/product/:productId", productHandler.UpdateProduct)
-	privateRouter.Delete("/product/:productId", productHandler.DeleteProduct)
+	router.Post("/product", middleware.Protected(), productHandler.CreateProduct)
+	router.Put("/product/:productId", middleware.Protected(), productHandler.UpdateProduct)
+	router.Delete("/product/:productId", middleware.Protected(), productHandler.DeleteProduct)
 }

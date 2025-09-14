@@ -76,26 +76,24 @@ func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
 	})
 
 	userRepo := repository.NewUserRepository(db)
-	// fileRepo := repository.NewFileRepository(db)
+	fileRepo := repository.NewFileRepository(db)
 	productsRepo := repository.NewProductsRepository(db)
 	// purchaseRepo := repository.NewPurchaseRepository(db)
 
+	fileService := services.NewUseCase(*cfg, fileRepo)
 	authService := services.NewAuthService(userRepo)
-	// userService := services.NewUserService(userRepo)
-	// fileService := service.NewFileService(fileRepo)
+	userService := services.NewUserService(userRepo)
 	productsService := services.NewProductsService(productsRepo)
 	// purchaseService := service.NewPurchaseService(purchaseRepo)
 
-	fileHandler := handlers.NewFileHandler(services.NewUseCase(*cfg, repository.NewFileRepository(db)))
+	fileHandler := handlers.NewFileHandler(fileService)
 	authHandler := handlers.NewAuthHandler(authService)
-	// userHandler := handlers.NewUserHandler(userService)
-
-	// productsHandler := handler.NewProductsHandler(productsUseCase)
-	productsHandler := handlers.NewProductsHandler(productsService, services.NewUseCase(*cfg, repository.NewFileRepository(db)))
+	userHandler := handlers.NewUserHandler(userService, fileService)
+	productsHandler := handlers.NewProductsHandler(productsService, fileService)
 	// purchaseHandler := handler.NewPurchaseHandler(purchaseUseCase)
 
 	route.RegisterAuthRoutes(v1, authHandler)
-	// route.RegisterUserRoutes(v1, userHandler)
+	route.RegisterUserRoutes(v1, userHandler)
 	route.RegisterFileRoutes(v1, fileHandler)
 	route.RegisterProductsRoutes(v1, productsHandler)
 	// route.RegisterPurchaseRoutes(v1, purchaseHandler)

@@ -36,7 +36,7 @@ func ValidToken(t *jwt.Token, id string) bool {
 // generateJWTToken membuat token JWT berdasarkan data user
 func GenerateJWTToken(user entities.User) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user.PublicId,
+		"user_id": user.Id,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	}
 

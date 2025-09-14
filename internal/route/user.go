@@ -16,11 +16,8 @@ import (
 )
 
 func RegisterUserRoutes(router fiber.Router, userHandler *handlers.UserHandler) {
-	// All user routes require authentication
-	userRouter := router.Use(middleware.Protected())
-
-	userRouter.Get("/user", userHandler.GetUser)
-	userRouter.Post("/user/link/email", userHandler.LinkEmail)
-	userRouter.Post("/user/link/phone", userHandler.LinkPhone)
-	userRouter.Put("/user", userHandler.UpdateUser)
+	router.Get("/user", middleware.Protected(), userHandler.GetUser)
+	router.Post("/user/link/email", middleware.Protected(), userHandler.LinkEmail)
+	router.Post("/user/link/phone", middleware.Protected(), userHandler.LinkPhone)
+	router.Put("/user", middleware.Protected(), userHandler.UpdateUser)
 }

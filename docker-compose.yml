@@ -18,7 +18,6 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       retries: 5
       timeout: 5s
-
   minio:
     container_name: tutuplapak-minio
     image: minio/minio:latest
@@ -39,26 +38,6 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       retries: 5
       timeout: 20s
-  
-  redis:
-    container_name: tutuplapak-redis
-    image: redis:7-alpine
-    ports:
-      - "${REDIS_PORT}:6379"
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASS}
-    volumes:
-      - redis_data:/data
-    env_file: .env
-    networks:
-      - tutuplapak-network
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASS}
-    healthcheck:
-      interval: 10s
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS}", "ping"]
-      timeout: 5s
-      retries: 3
-
   app:
     build:
       context: .
@@ -71,15 +50,10 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-      redis:
-        condition: service_healthy
     env_file: .env
     networks:
       - tutuplapak-network
     environment:
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      MINIO_PORT: ${MINIO_PORT}
       MINIO_CONSOLE_PORT: ${MINIO_CONSOLE_PORT}
       MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
       MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
@@ -99,7 +73,6 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
   minio_data:
 
 networks:
