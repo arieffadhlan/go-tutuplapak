@@ -15,7 +15,7 @@ func Protected() fiber.Handler {
 		ErrorHandler: jwtError,
 		SuccessHandler: func(c *fiber.Ctx) error {
 			// Mendapatkan token yang sudah diverifikasi dari konteks
-			user := c.Locals("user").(*jwt.Token)
+			user := c.Locals("userId").(*jwt.Token)
 
 			// Mengekstrak klaim dari token
 			claims := user.Claims.(jwt.MapClaims)

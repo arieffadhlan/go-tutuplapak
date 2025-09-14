@@ -8,6 +8,7 @@ import (
 	"tutuplapak-user/internal/dto"
 	"tutuplapak-user/internal/repository"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -21,27 +22,34 @@ func NewUserService(userRepo repository.UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) GetUserProfile(ctx context.Context, publicId string) (*dto.UserResponse, error) {
-	user, err := s.userRepo.GetUserByPublicId(ctx, publicId)
+// helper: convert *string → string
+func strOrEmpty(s *string) string {
+	if s != nil {
+		return *s
+	}
+	return ""
+}
+
+func (s *UserService) GetUserProfile(ctx context.Context, userId uuid.UUID) (*dto.UserResponse, error) {
+	user, err := s.userRepo.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.UserResponse{
-		Email:             user.Email,
-		Phone:             user.Phone,
+		Email:             strOrEmpty(user.Email),
+		Phone:             strOrEmpty(user.Phone),
 		FileId:            user.FileId,
-		FileUri:           user.FileUri,
-		FileThumbnailUri:  user.FileThumbnailUri,
-		BankAccountName:   user.BankAccountName,
-		BankAccountHolder: user.BankAccountHolder,
-		BankAccountNumber: user.BankAccountNumber,
+		FileUri:           strOrEmpty(user.FileUri),
+		FileThumbnailUri:  strOrEmpty(user.FileThumbnailUri),
+		BankAccountName:   strOrEmpty(user.BankAccountName),
+		BankAccountHolder: strOrEmpty(user.BankAccountHolder),
+		BankAccountNumber: strOrEmpty(user.BankAccountNumber),
 	}, nil
 }
 
-func (s *UserService) LinkEmail(ctx context.Context, publicId string, req dto.LinkEmailRequest) error {
-	// Check if email already exists
-	exists, err := s.userRepo.CheckEmailExists(ctx, req.Email)
+func (s *UserService) LinkEmail(ctx context.Context, userId uuid.UUID, req dto.LinkEmailRequest) error {
+	exists, err := s.userRepo.CheckEmailExists(ctx, req.Email, userId)
 	if err != nil {
 		return err
 	}
@@ -50,9 +58,8 @@ func (s *UserService) LinkEmail(ctx context.Context, publicId string, req dto.Li
 		return errors.New("email is taken")
 	}
 
-	err = s.userRepo.LinkEmail(ctx, publicId, req.Email)
+	err = s.userRepo.LinkEmail(ctx, userId, req.Email)
 	if err != nil {
-		// Handle PostgreSQL unique constraint violation
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			if strings.Contains(pqErr.Message, "email") {
 				return errors.New("email is taken")
@@ -64,9 +71,8 @@ func (s *UserService) LinkEmail(ctx context.Context, publicId string, req dto.Li
 	return nil
 }
 
-func (s *UserService) LinkPhone(ctx context.Context, publicId string, req dto.LinkPhoneRequest) error {
-	// Check if phone already exists
-	exists, err := s.userRepo.CheckPhoneExists(ctx, req.Phone)
+func (s *UserService) LinkPhone(ctx context.Context, userId uuid.UUID, req dto.LinkPhoneRequest) error {
+	exists, err := s.userRepo.CheckPhoneExists(ctx, req.Phone, userId)
 	if err != nil {
 		return err
 	}
@@ -75,9 +81,8 @@ func (s *UserService) LinkPhone(ctx context.Context, publicId string, req dto.Li
 		return errors.New("phone is taken")
 	}
 
-	err = s.userRepo.LinkPhone(ctx, publicId, req.Phone)
+	err = s.userRepo.LinkPhone(ctx, userId, req.Phone)
 	if err != nil {
-		// Handle PostgreSQL unique constraint violation
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			if strings.Contains(pqErr.Message, "phone") {
 				return errors.New("phone is taken")
@@ -89,6 +94,6 @@ func (s *UserService) LinkPhone(ctx context.Context, publicId string, req dto.Li
 	return nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, publicId string, req dto.UpdateUserRequest) error {
-	return s.userRepo.UpdateUser(ctx, publicId, req)
+func (s *UserService) UpdateUser(ctx context.Context, userId uuid.UUID, req dto.UpdateUserRequest) error {
+	return s.userRepo.UpdateUser(ctx, userId, req)
 }

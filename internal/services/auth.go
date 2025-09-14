@@ -66,7 +66,7 @@ func (s AuthService) LoginByPhone(c context.Context, req dto.AuthPhoneRequest) (
 
 func (s AuthService) RegisterByEmail(c context.Context, req dto.AuthEmailRequest) (tkn string, user entities.User, err error) {
 
-	user, err = s.repo.GetUserByEmail(c, req.Email)
+	user, _ = s.repo.GetUserByEmail(c, req.Email)
 	if user.Email != nil {
 		return "", entities.User{}, ErrUserAlreadyExists
 	}
@@ -86,7 +86,7 @@ func (s AuthService) RegisterByEmail(c context.Context, req dto.AuthEmailRequest
 
 func (s AuthService) RegisterByPhone(c context.Context, req dto.AuthPhoneRequest) (tkn string, user entities.User, err error) {
 
-	user, err = s.repo.GetUserByPhone(c, req.Phone)
+	user, _ = s.repo.GetUserByPhone(c, req.Phone)
 	if user.Phone != nil {
 		return "", entities.User{}, ErrUserAlreadyExists
 	}
