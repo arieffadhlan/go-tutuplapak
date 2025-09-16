@@ -14,10 +14,10 @@ type FileHandler interface {
 }
 
 type fileHandler struct {
-	fileUseCase services.UseCase
+	fileUseCase *services.FileService
 }
 
-func NewFileHandler(fileUseCase services.UseCase) FileHandler {
+func NewFileHandler(fileUseCase *services.FileService) FileHandler {
 	return &fileHandler{
 		fileUseCase: fileUseCase,
 	}

@@ -4,20 +4,20 @@ import (
 	"strconv"
 	"strings"
 	"tutuplapak-user/internal/dto"
-	"tutuplapak-user/internal/utils"
 	"tutuplapak-user/internal/services"
+	"tutuplapak-user/internal/utils"
 
-	"github.com/google/uuid"
-	"github.com/gofiber/fiber/v2"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type ProductsHandler struct {
 	prodService *services.ProductsService
-	fileService services.UseCase
+	fileService *services.FileService
 }
 
-func NewProductsHandler(prodService *services.ProductsService, fileService services.UseCase) *ProductsHandler {
+func NewProductsHandler(prodService *services.ProductsService, fileService *services.FileService) *ProductsHandler {
 	return &ProductsHandler{
 		prodService: prodService,
 		fileService: fileService,
@@ -28,14 +28,14 @@ func (h *ProductsHandler) GetAllProducts(c *fiber.Ctx) error {
 	lim := 5
 	if limStr := c.Query("limit"); limStr != "" {
 		if limVal, err := strconv.Atoi(limStr); err == nil && limVal > 0 {
-			 lim = limVal
+			lim = limVal
 		}
 	}
 
 	offset := 0
 	if offStr := c.Query("offset"); offStr != "" {
 		if offVal, err := strconv.Atoi(offStr); err == nil && offVal > 0 {
-			 offset = offVal
+			offset = offVal
 		}
 	}
 
@@ -45,13 +45,13 @@ func (h *ProductsHandler) GetAllProducts(c *fiber.Ctx) error {
 			productId = pid
 		}
 	}
-	
+
 	var sku string
 	var sortBy string
 	var category string
-	
+
 	if val := c.Query("sku"); val != "" {
-		 sku = val
+		sku = val
 	}
 
 	if val := c.Query("category"); val != "" {
@@ -63,7 +63,7 @@ func (h *ProductsHandler) GetAllProducts(c *fiber.Ctx) error {
 			"Clothes":   true,
 		}
 		if allowedCategories[val] {
-			 category = val
+			category = val
 		}
 	}
 
@@ -75,7 +75,7 @@ func (h *ProductsHandler) GetAllProducts(c *fiber.Ctx) error {
 			"expensive": true,
 		}
 		if validVal[strings.ToLower(sby)] {
-			 sortBy = strings.ToLower(sby)
+			sortBy = strings.ToLower(sby)
 		}
 	}
 
@@ -104,28 +104,28 @@ func (h *ProductsHandler) CreateProduct(c *fiber.Ctx) error {
 	var request dto.CreateProductRequest
 
 	if err := c.BodyParser(&request); err != nil {
-		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if err := validator.New().Struct(request); err != nil {
-		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	userIdStr, ok := c.Locals("userId").(string)
 	if !ok || userIdStr == "" {
-		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
 	userIdUid, err := uuid.Parse(userIdStr)
 	if err != nil {
-		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
 	request.UserID = userIdUid
 
-	file, err := h.fileService.GetFileById(c, request.FileID)
+	file, err := h.fileService.GetFileById(c.Context(), request.FileID)
 	if err != nil {
-		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	request.FileURI = file.Url
@@ -135,11 +135,11 @@ func (h *ProductsHandler) CreateProduct(c *fiber.Ctx) error {
 	if err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
-			} else {
+		} else {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 	}
-	
+
 	return c.Status(fiber.StatusCreated).JSON(r)
 }
 
@@ -147,14 +147,14 @@ func (h *ProductsHandler) UpdateProduct(c *fiber.Ctx) error {
 	var productId uuid.UUID
 	if pidStr := c.Params("productId"); pidStr != "" {
 		if pid, err := uuid.Parse(pidStr); err == nil {
-			 productId = pid
+			productId = pid
 		}
 	}
-	
+
 	var request dto.UpdateProductRequest
 
 	if err := c.BodyParser(&request); err != nil {
-		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if err := validator.New().Struct(request); err != nil {
@@ -163,20 +163,20 @@ func (h *ProductsHandler) UpdateProduct(c *fiber.Ctx) error {
 
 	userIdStr, ok := c.Locals("userId").(string)
 	if !ok || userIdStr == "" {
-		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
 	userIdUid, err := uuid.Parse(userIdStr)
 	if err != nil {
-		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
 	request.ProdID = productId
 	request.UserID = userIdUid
 
-	file, err := h.fileService.GetFileById(c, request.FileID)
+	file, err := h.fileService.GetFileById(c.Context(), request.FileID)
 	if err != nil {
-		 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	request.FileURI = file.Url
@@ -186,7 +186,7 @@ func (h *ProductsHandler) UpdateProduct(c *fiber.Ctx) error {
 	if err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
-			} else {
+		} else {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 	}
@@ -198,24 +198,24 @@ func (h *ProductsHandler) DeleteProduct(c *fiber.Ctx) error {
 	var productId uuid.UUID
 	if pidStr := c.Params("productId"); pidStr != "" {
 		if pid, err := uuid.Parse(pidStr); err == nil {
-			 productId = pid
+			productId = pid
 		}
 	}
 
 	userIdStr, ok := c.Locals("userId").(string)
 	if !ok || userIdStr == "" {
-		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
 	userIdUid, err := uuid.Parse(userIdStr)
 	if err != nil {
-		 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
 	if err := h.prodService.DeleteProduct(c, productId, userIdUid); err != nil {
 		if appErr, ok := err.(*utils.AppError); ok {
 			return c.Status(appErr.Code).JSON(appErr)
-			} else {
+		} else {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 	}
