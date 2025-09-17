@@ -1,8 +1,12 @@
 package route
 
-// import "github.com/gofiber/fiber/v2"
+import (
+	"tutuplapak-user/internal/handlers"
 
-// func RegisterProductsRoutes(router fiber.Router, purchaseHandler handler.PurchaseHandler) {
-// 	router.Post("/product", purchaseHandler.CreatePurchase)
-// 	router.Post("/product/:productId", purchaseHandler.DeletePurchase)
-// }
+	"github.com/gofiber/fiber/v2"
+)
+
+func RegisterPurchaseRoutes(router fiber.Router, handler *handlers.PurchaseHandler) {
+	router.Post("/purchase", handler.Purchase)
+	router.Post("/purchase/:purchaseId", handler.PurchasePaymentProof)
+}
