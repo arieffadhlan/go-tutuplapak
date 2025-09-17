@@ -18,6 +18,17 @@ func NewPurchaseHandler(service *services.PurchaseService) *PurchaseHandler {
 	return &PurchaseHandler{service: service}
 }
 
+// func isValidEmail(email string) bool {
+// 	_, err := mail.ParseAddress(email)
+// 	return err == nil
+// }
+
+// var phoneRegexPattern = regexp.MustCompile(`^\+[0-9]+$`)
+
+// func isValidPhone(phone string) bool {
+// 	return phoneRegexPattern.MatchString(phone)
+// }
+
 func (h *PurchaseHandler) Purchase(c *fiber.Ctx) error {
 	var request dto.CreatePurchaseRequest
 
@@ -28,6 +39,26 @@ func (h *PurchaseHandler) Purchase(c *fiber.Ctx) error {
 	validate := validator.New()
 	if err := validate.Struct(request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// validate email or phone format based on SenderContactType
+	if request.SenderContactType == "email" {
+		if !isEmail(request.SenderContactDetail) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid senderContactDetail email format"})
+		}
+	} else if request.SenderContactType == "phone" {
+		// should began with international calling number with + prefix
+
+		if !isPhone(request.SenderContactDetail) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid senderContactDetail phone format"})
+		}
+	} else {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid senderContactType"})
+	}
+
+	// check if PurchasedItems is not empty
+	if len(request.PurchasedItems) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "purchasedItems cannot be empty"})
 	}
 
 	r, err := h.service.Purchase(c, request)
