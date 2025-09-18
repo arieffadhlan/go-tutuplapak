@@ -80,7 +80,7 @@ func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
 	productsRepo := repository.NewProductsRepository(db)
 	// purchaseRepo := repository.NewPurchaseRepository(db)
 
-	fileService := services.NewUseCase(*cfg, fileRepo)
+	fileService := services.NewFileService(*cfg, fileRepo)
 	authService := services.NewAuthService(userRepo)
 	userService := services.NewUserService(userRepo)
 	productsService := services.NewProductsService(productsRepo)

@@ -12,23 +12,17 @@ import (
 	"tutuplapak-user/internal/repository"
 	minioUploader "tutuplapak-user/internal/utils"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )
 
-type UseCase interface {
-	GetFileById(ctx *fiber.Ctx, id uuid.UUID) (*dto.FileResponse, error)
-	UploadFile(context.Context, *multipart.FileHeader, multipart.File, string) (*dto.FileResponse, error)
-}
-
-type useCase struct {
+type FileService struct {
 	config         config.Config
 	minio          *minio.Client
 	fileRepository repository.FileRepositoryInterface
 }
 
-func NewUseCase(config config.Config, fileRepository repository.FileRepositoryInterface) UseCase {
+func NewFileService(config config.Config, fileRepository repository.FileRepositoryInterface) *FileService {
 	minioConfig := &minioUploader.MinioConfig{
 		AccessKeyID:     config.Minio.AccessKeyID,
 		SecretAccessKey: config.Minio.SecretAccessKey,
@@ -38,29 +32,29 @@ func NewUseCase(config config.Config, fileRepository repository.FileRepositoryIn
 
 	minioClient, _ := minioUploader.NewUploader(minioConfig)
 
-	return &useCase{
+	return &FileService{
 		config:         config,
 		minio:          minioClient,
 		fileRepository: fileRepository,
 	}
 }
 
-func (uc *useCase) GetFileById(ctx *fiber.Ctx, id uuid.UUID) (*dto.FileResponse, error) {
+func (uc *FileService) GetFileById(ctx context.Context, id uuid.UUID) (dto.FileResponse, error) {
 	res, err := uc.fileRepository.GetFileById(ctx, id)
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	} else {
 		return res, nil
 	}
 }
 
-func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, src multipart.File, fileName string) (*dto.FileResponse, error) {
+func (uc *FileService) UploadFile(ctx context.Context, file *multipart.FileHeader, src multipart.File, fileName string) (dto.FileResponse, error) {
 	bucketName := uc.config.Minio.BucketName
 	fileNameCompress := minioUploader.AddFileNameSuffix(fileName)
 	// compress file
 	srcForCompress, err := file.Open()
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	}
 	defer srcForCompress.Close()
 
@@ -79,7 +73,7 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 	)
 
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	}
 
 	// upload for the thumbnail
@@ -93,18 +87,18 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 	)
 
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	}
 
 	// get url original
 	url, err := uc.minio.PresignedGetObject(ctx, bucketName, fileName, time.Hour*24*7, nil)
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	}
 	// get url thumbnail
 	thumbUrl, err := uc.minio.PresignedGetObject(ctx, bucketName, fileNameCompress, time.Hour*24*7, nil)
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	}
 
 	// build entity
@@ -120,10 +114,10 @@ func (uc *useCase) UploadFile(ctx context.Context, file *multipart.FileHeader, s
 	}
 	res, err := uc.fileRepository.Post(ctx, dtoPayload)
 	if err != nil {
-		return nil, err
+		return dto.FileResponse{}, err
 	}
 
-	return &dto.FileResponse{
+	return dto.FileResponse{
 		ID:           res.ID,
 		Url:          res.Url,
 		ThumbnailUrl: res.ThumbnailUrl,

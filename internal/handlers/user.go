@@ -16,10 +16,10 @@ import (
 type UserHandler struct {
 	validator   *validator.Validate
 	userService *services.UserService
-	fileService services.UseCase
+	fileService *services.FileService
 }
 
-func NewUserHandler(userService *services.UserService, fileService services.UseCase) *UserHandler {
+func NewUserHandler(userService *services.UserService, fileService *services.FileService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		fileService: fileService,
@@ -135,7 +135,7 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Validation error"})
 	}
 
-	file, err := h.fileService.GetFileById(c, req.FileId)
+	file, err := h.fileService.GetFileById(c.Context(), req.FileId)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
