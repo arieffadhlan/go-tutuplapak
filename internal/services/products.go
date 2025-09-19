@@ -1,24 +1,26 @@
 package services
 
 import (
+	"context"
 	"tutuplapak-user/internal/dto"
 	"tutuplapak-user/internal/repository"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
 type ProductsService struct {
 	repository *repository.ProductsRepository
+	fs         *FileService
 }
 
-func NewProductsService(repository *repository.ProductsRepository) *ProductsService {
+func NewProductsService(repository *repository.ProductsRepository, fs *FileService) *ProductsService {
 	return &ProductsService{
 		repository: repository,
+		fs:         fs,
 	}
 }
 
-func (s *ProductsService) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
+func (s *ProductsService) GetAllProducts(ctx context.Context, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
 	rs, err := s.repository.GetAllProducts(ctx, params) 
 	if err != nil {
 		 return nil, err
@@ -31,20 +33,27 @@ func (s *ProductsService) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllProduc
 	return rs, nil
 }
 
-func (s *ProductsService)CreateProduct(ctx *fiber.Ctx, req dto.CreateProductRequest) (dto.CreateProductResponse, error) {
+func (s *ProductsService)CreateProduct(ctx context.Context, req dto.CreateProductRequest) (dto.CreateProductResponse, error) {
 	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.ProdID, req.SKU); err != nil {
 		 return dto.CreateProductResponse{}, err
 	}
+
+	file, err := s.fs.GetFileById(ctx, req.FileID)
+	if err != nil {
+		 return dto.CreateProductResponse{}, err
+	}
+
+	req.FileURI = file.Url
+	req.FileThumbnailURI = file.ThumbnailUrl
 	
 	rs,err := s.repository.CreateProduct(ctx, req)
 	if err != nil {
 		 return rs, err
-	} else {
-		 return rs, nil
 	}
+	return rs, nil
 }
 
-func (s *ProductsService)UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProductRequest) (dto.UpdateProductResponse, error) {
+func (s *ProductsService)UpdateProduct(ctx context.Context, req dto.UpdateProductRequest) (dto.UpdateProductResponse, error) {
 	if err := s.repository.CheckPrdOwner(ctx, req.UserID, req.ProdID); err != nil {
 		 return dto.UpdateProductResponse{}, err
 	}
@@ -52,16 +61,23 @@ func (s *ProductsService)UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProductRequ
 	if err := s.repository.CheckSKUExist(ctx, req.UserID, req.ProdID, req.SKU); err != nil {
 		 return dto.UpdateProductResponse{}, err
 	}
+
+	file, err := s.fs.GetFileById(ctx, req.FileID)
+	if err != nil {
+		 return dto.UpdateProductResponse{}, err
+	}
+
+	req.FileURI = file.Url
+	req.FileThumbnailURI = file.ThumbnailUrl
 	
 	rs,err := s.repository.UpdateProduct(ctx, req)
 	if err != nil {
 		 return rs, err
-	} else {
-		 return rs, nil
 	}
+	return rs, nil
 }
 
-func (s *ProductsService)DeleteProduct(ctx *fiber.Ctx, prodId uuid.UUID, userId uuid.UUID) error {
+func (s *ProductsService)DeleteProduct(ctx context.Context, prodId uuid.UUID, userId uuid.UUID) error {
 	if err := s.repository.CheckPrdOwner(ctx, userId, prodId); err != nil {
 		 return err
 	}
@@ -69,7 +85,6 @@ func (s *ProductsService)DeleteProduct(ctx *fiber.Ctx, prodId uuid.UUID, userId 
 	err := s.repository.DeleteProduct(ctx, userId, prodId)
 	if err != nil {
 		 return err
-	} else {
-		 return nil
 	}
+	return nil
 }

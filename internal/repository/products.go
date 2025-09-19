@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"tutuplapak-user/internal/dto"
 	"tutuplapak-user/internal/utils"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -23,20 +23,9 @@ func NewProductsRepository(db *sqlx.DB) *ProductsRepository {
 	}
 }
 
-func (r *ProductsRepository) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
+func (r *ProductsRepository) GetAllProducts(ctx context.Context, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
 	query := `
-		SELECT 
-      id, 
-      name, 
-      sku, 
-      qty, 
-      price, 
-      category, 
-      file_id, 
-      file_uri, 
-      file_thumbnail_uri, 
-      created_at, 
-      updated_at
+		SELECT id, name, sku, qty, price, category, file_id, file_uri, file_thumbnail_uri, created_at, updated_at
 		FROM products
 	`
 
@@ -91,7 +80,7 @@ func (r *ProductsRepository) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllPro
 	}
 
 	var products []dto.ProductResponse
-	err := r.db.SelectContext(ctx.Context(), &products, query, args...)
+	err := r.db.SelectContext(ctx, &products, query, args...)
 	if err != nil {
 		 return nil, utils.NewInternal("failed get product")
 	}
@@ -99,7 +88,7 @@ func (r *ProductsRepository) GetAllProducts(ctx *fiber.Ctx, params dto.GetAllPro
 	return products, nil
 }
 
-func (r *ProductsRepository) CreateProduct(ctx *fiber.Ctx, req dto.CreateProductRequest) (dto.CreateProductResponse, error) {
+func (r *ProductsRepository) CreateProduct(ctx context.Context, req dto.CreateProductRequest) (dto.CreateProductResponse, error) {
 	query := `
 		INSERT INTO products (
       name, 
@@ -130,7 +119,7 @@ func (r *ProductsRepository) CreateProduct(ctx *fiber.Ctx, req dto.CreateProduct
 	`
 
 	var product dto.CreateProductResponse
-	err := r.db.GetContext(ctx.Context(), &product, query,
+	err := r.db.GetContext(ctx, &product, query,
 		req.Name,
 		req.UserID,
 		req.FileID,
@@ -150,7 +139,7 @@ func (r *ProductsRepository) CreateProduct(ctx *fiber.Ctx, req dto.CreateProduct
 	return product, nil
 }
 
-func (r *ProductsRepository) UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProductRequest) (dto.UpdateProductResponse, error) {
+func (r *ProductsRepository) UpdateProduct(ctx context.Context, req dto.UpdateProductRequest) (dto.UpdateProductResponse, error) {
 	query := `
 		UPDATE products
 		SET name = $1,
@@ -168,7 +157,7 @@ func (r *ProductsRepository) UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProduct
 	`
 
 	var product dto.UpdateProductResponse
-	err := r.db.GetContext(ctx.Context(), &product, query,
+	err := r.db.GetContext(ctx, &product, query,
 		req.Name,
 		req.UserID,
 		req.FileID,
@@ -188,13 +177,13 @@ func (r *ProductsRepository) UpdateProduct(ctx *fiber.Ctx, req dto.UpdateProduct
 	return product, nil
 }
 
-func (r *ProductsRepository) DeleteProduct(ctx *fiber.Ctx, userId uuid.UUID, prodId uuid.UUID) error {
+func (r *ProductsRepository) DeleteProduct(ctx context.Context, userId uuid.UUID, prodId uuid.UUID) error {
 	query := `
 		DELETE FROM products
 		WHERE id = $1 AND user_id = $2
 	`
 
-	result, err := r.db.ExecContext(ctx.Context(), query, prodId, userId)
+	result, err := r.db.ExecContext(ctx, query, prodId, userId)
 	if err != nil {
 		 return utils.NewInternal("failed delete product")
 	}
@@ -211,7 +200,7 @@ func (r *ProductsRepository) DeleteProduct(ctx *fiber.Ctx, userId uuid.UUID, pro
 	return nil
 }
 
-func (r *ProductsRepository) CheckSKUExist(ctx *fiber.Ctx, userId uuid.UUID, prodId uuid.UUID, sku string) error {
+func (r *ProductsRepository) CheckSKUExist(ctx context.Context, userId uuid.UUID, prodId uuid.UUID, sku string) error {
 	query := `
 		SELECT id
 		FROM products 
@@ -220,7 +209,7 @@ func (r *ProductsRepository) CheckSKUExist(ctx *fiber.Ctx, userId uuid.UUID, pro
 	`
 
 	var ext uuid.UUID
-	err := r.db.GetContext(ctx.Context(), &ext, query, userId, sku)
+	err := r.db.GetContext(ctx, &ext, query, userId, sku)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
@@ -235,11 +224,11 @@ func (r *ProductsRepository) CheckSKUExist(ctx *fiber.Ctx, userId uuid.UUID, pro
 	return nil
 }
 
-func (r *ProductsRepository) CheckPrdOwner(ctx *fiber.Ctx, userId uuid.UUID, productId uuid.UUID) error {
+func (r *ProductsRepository) CheckPrdOwner(ctx context.Context, userId uuid.UUID, productId uuid.UUID) error {
 	query := `SELECT user_id FROM products WHERE id = $1`
 
 	var ownerID uuid.UUID
-	err := r.db.GetContext(ctx.Context(), &ownerID, query, productId)
+	err := r.db.GetContext(ctx, &ownerID, query, productId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return utils.NewNotFound("product data not found")
