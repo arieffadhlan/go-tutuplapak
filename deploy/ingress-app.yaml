@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tutuplapak-app
+  namespace: kube-tutuplapak
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  tls:
+    - hosts:
+        - app.tutuplapak.local
+      secretName: tutuplapak-tls
+  rules:
+    - host: app.tutuplapak.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tutuplapak-app
+                port:
+                  number: 8000
