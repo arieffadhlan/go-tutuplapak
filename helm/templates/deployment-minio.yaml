@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: {{ .Values.namespace }}
+spec:
+  type: NodePort
+  ports:
+    - name: api
+      port: {{ .Values.minio.port }}
+      targetPort: {{ .Values.minio.port }}
+      nodePort: 30090
+    - name: console
+      port: {{ .Values.minio.consolePort }}
+      targetPort: {{ .Values.minio.consolePort }}
+      nodePort: 30091
+  selector:
+    app: minio
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args: ["server", "/data", "--console-address", ":{{ .Values.minio.consolePort }}"]
+          envFrom:
+            - secretRef:
+                name: app-secrets
+          ports:
+            - containerPort: {{ .Values.minio.port }}
+            - containerPort: {{ .Values.minio.consolePort }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}

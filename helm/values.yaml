@@ -1,0 +1,29 @@
+namespace: kube-tutuplapak
+
+image:
+  repository: tutuplapak
+  tag: v2
+  pullPolicy: IfNotPresent
+
+app:
+  name: tutuplapak-app
+  port: 8000
+  host: app.tutuplapak.local
+
+db:
+  name: postgres
+  user: prod_user
+  password: prod_pass
+  database: prod_tutuplapak
+  port: 5432
+
+minio:
+  rootUser: minioaccess
+  rootPassword: miniosecret
+  bucket: tutuplapak-bucket
+  port: 9000
+  consolePort: 9001
+  host: minio.tutuplapak.local
+
+tls:
+  secretName: tutuplapak-tls

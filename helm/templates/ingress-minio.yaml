@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-ingress
+  namespace: {{ .Values.namespace }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.minio.host }}
+      secretName: {{ .Values.tls.secretName }}
+  rules:
+    - host: {{ .Values.minio.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: {{ .Values.minio.consolePort }}
