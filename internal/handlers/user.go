@@ -148,12 +148,12 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "fileId is not valid / exists"})
 		}
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Server Error"})
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	user, err := h.userService.GetUserProfile(c.Context(), userId)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Server Error"})
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(user)

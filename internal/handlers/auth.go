@@ -8,6 +8,7 @@ import (
 	"tutuplapak-user/internal/repository"
 	"tutuplapak-user/internal/services"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -111,6 +112,10 @@ func (h AuthHandler) RegisterByEmail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on register request", "data": err})
 	}
 
+	if err := validator.New().Struct(input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	if !isEmail(input.Email) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Invalid email"})
 	}
@@ -143,6 +148,10 @@ func (h AuthHandler) RegisterByPhone(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on register request", "data": err})
+	}
+
+	if err := validator.New().Struct(input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if !isPhone(input.Phone) {

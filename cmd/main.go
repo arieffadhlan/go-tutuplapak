@@ -63,7 +63,7 @@ func RunServer(app *fiber.App, cfg *config.Config) {
 }
 
 func RegRoutes(app *fiber.App, cfg *config.Config, db *sqlx.DB) {
-	v1 := app.Group("/api/v1", logger.New())
+	v1 := app.Group("/v1", logger.New())
 
 	v1.Get("/health-check", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "Ok"})

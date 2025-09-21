@@ -36,10 +36,15 @@ func (s *UserService) GetUserProfile(ctx context.Context, userId uuid.UUID) (*dt
 		return nil, err
 	}
 
+	var fileId string
+	if user.FileId != uuid.Nil {
+		fileId = user.FileId.String()
+	}
+
 	return &dto.UserResponse{
 		Email:             strOrEmpty(user.Email),
 		Phone:             strOrEmpty(user.Phone),
-		FileId:            user.FileId,
+		FileId:            fileId,
 		FileUri:           strOrEmpty(user.FileUri),
 		FileThumbnailUri:  strOrEmpty(user.FileThumbnailUri),
 		BankAccountName:   strOrEmpty(user.BankAccountName),

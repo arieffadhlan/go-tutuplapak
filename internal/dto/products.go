@@ -16,8 +16,8 @@ type ProductResponse struct {
 	FileURI          string    `json:"fileUri" db:"file_uri"`
 	FileThumbnailURI string    `json:"fileThumbnailUri" db:"file_thumbnail_uri"`
 	Name             string    `json:"name" db:"name"`
-	CreatedAt        time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt        time.Time `db:"updated_at" json:"updated_at"`
+	CreatedAt        time.Time `db:"created_at" json:"createdAt"`
+	UpdatedAt        time.Time `db:"updated_at" json:"updatedAt"`
 }
 
 type CreateProductRequest struct {
@@ -41,7 +41,7 @@ type UpdateProductRequest struct {
 	SKU              string    `json:"sku" validate:"required,max=32"`
 	Qty              int       `json:"qty" validate:"required,min=1"`
 	Price            int       `json:"price" validate:"required,min=100"`
-	Category         string    `json:"category" validate:"required,oneof=Food Tools Clothes Beverag Furniture"`
+	Category         string    `json:"category" validate:"required,oneof=Food Tools Clothes Beverage Furniture"`
 	FileURI          string    `json:"-"`
 	FileThumbnailURI string    `json:"-"`
 }
