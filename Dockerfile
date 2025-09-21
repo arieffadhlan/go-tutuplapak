@@ -30,9 +30,6 @@ WORKDIR /app
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
-# Copy migration
-COPY --from=builder /app/migrations ./migrations
-
 # Create non-root user
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
