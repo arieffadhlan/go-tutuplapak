@@ -84,7 +84,7 @@ func (h *PurchaseHandler) PurchasePaymentProof(c *fiber.Ctx) error {
 	var request dto.CreatePurchasePaymentProofRequest
 	uuidPurchaseId, err := uuid.Parse(purchaseId)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid purchaseId format"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "invalid purchaseId format"})
 	}
 	request.PurchaseId = uuidPurchaseId
 
@@ -104,7 +104,11 @@ func (h *PurchaseHandler) PurchasePaymentProof(c *fiber.Ctx) error {
 		}
 
 		if errors.Is(err, services.ErrFileIdNotFound) {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		if errors.Is(err, services.ErrPurchaseNotFound) { // ✅ baru
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})

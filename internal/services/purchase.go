@@ -36,6 +36,7 @@ var ErrQtyExceedsStock = errors.New("requested quantity exceeds stock")
 var ErrFileIdsCountMismatch = errors.New("file ids count does not match order payment count")
 var ErrFileIdNotFound = errors.New("one or more file ids not found")
 var ErrProductIdNotFound = errors.New("one or more product ids not found")
+var ErrPurchaseNotFound = errors.New("purchaseId not found")
 
 func (s *PurchaseService) Purchase(ctx *fiber.Ctx, req dto.CreatePurchaseRequest) (dto.CreatePurchaseResponse, error) {
 	productIds := make([]uuid.UUID, 0, len(req.PurchasedItems))
@@ -239,6 +240,10 @@ func (s *PurchaseService) PurchasePaymentProof(ctx *fiber.Ctx, req dto.CreatePur
 	orderPayment, err := s.repository.GetOrderPaymentByPurchaseId(ctx, req.PurchaseId)
 	if err != nil {
 		return fmt.Errorf("failed get order payment: %w", err)
+	}
+
+	if len(orderPayment) == 0 {
+		return ErrPurchaseNotFound
 	}
 
 	if len(orderPayment) != len(req.FileIds) {

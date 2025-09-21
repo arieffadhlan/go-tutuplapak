@@ -25,7 +25,7 @@ func NewProductsRepository(db *sqlx.DB) *ProductsRepository {
 
 func (r *ProductsRepository) GetAllProducts(ctx context.Context, params dto.GetAllProductsParams) ([]dto.ProductResponse, error) {
 	query := `
-		SELECT id, name, sku, qty, price, category, file_id, file_uri, file_thumbnail_uri, created_at, updated_at
+		SELECT id, user_id, name, sku, qty, price, category, file_id, file_uri, file_thumbnail_uri, created_at, updated_at
 		FROM products
 	`
 
@@ -56,8 +56,8 @@ func (r *ProductsRepository) GetAllProducts(ctx context.Context, params dto.GetA
 	}
 
 	sortMap := map[string]string{
-		"newest":    "updated_at DESC",
-		"oldest":    "updated_at ASC",
+		"newest":    "GREATEST(updated_at, created_at) DESC",
+    "oldest":    "LEAST(updated_at, created_at) ASC",
 		"expensive": "price DESC",
 		"cheapest":  "price ASC",
 	}

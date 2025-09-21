@@ -20,15 +20,15 @@ type PurchaseItemResponse struct {
 	FileID           uuid.UUID `json:"fileId"`
 	Category         string    `json:"category"`
 	FileURI          string    `json:"fileUri"`
-	FileThumbnailURI string    `json:"file_thumbnailUri"`
+	FileThumbnailURI string    `json:"fileThumbnailUri"`
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`
 }
 type CreatePurchaseRequest struct {
-	SenderName          string `json:"senderName" validate:"required,min=4,max=55"`
-	SenderContactType   string `json:"senderContactType" validate:"required,oneof=email phone"`
-	SenderContactDetail string `json:"senderContactDetail" validate:"required,min=4,max=55"`
-	PurchasedItems      []PurchaseItem
+	SenderName          string         `json:"senderName" validate:"required,min=4,max=55"`
+	SenderContactType   string         `json:"senderContactType" validate:"required,oneof=email phone"`
+	SenderContactDetail string         `json:"senderContactDetail" validate:"required,min=4,max=55"`
+	PurchasedItems      []PurchaseItem `json:"purchasedItems" validate:"required,min=1,dive"`
 }
 
 type PurchasePaymentResponse struct {
