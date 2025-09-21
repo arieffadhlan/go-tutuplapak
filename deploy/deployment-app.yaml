@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/team-express:6311434
+          image: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/team-express:11d96df
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
@@ -70,14 +70,16 @@ spec:
             httpGet:
               path: /v1/health-check
               port: 8000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 40
             periodSeconds: 10
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /v1/health-check
               port: 8000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 80
             periodSeconds: 20
+            timeoutSeconds: 5
           resources:
             requests:
               cpu: "1"
