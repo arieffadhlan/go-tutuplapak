@@ -8,10 +8,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - minio.tutuplapak.local
+        - minio.tutuplapak.express
       secretName: tutuplapak-tls
   rules:
-    - host: minio.tutuplapak.local
+    - host: minio.tutuplapak.express
       http:
         paths:
           - path: /

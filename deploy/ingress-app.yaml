@@ -8,10 +8,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - app.tutuplapak.local
+        - app.tutuplapak.express
       secretName: tutuplapak-tls
   rules:
-    - host: app.tutuplapak.local
+    - host: app.tutuplapak.express
       http:
         paths:
           - path: /
