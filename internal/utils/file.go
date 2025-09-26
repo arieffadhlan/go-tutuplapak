@@ -12,7 +12,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/nfnt/resize"
+	"golang.org/x/image/draw"
 )
 
 type MinioConfig struct {
@@ -36,12 +36,22 @@ func NewUploader(cfg *MinioConfig) (*minio.Client, error) {
 	return minioClient, nil
 }
 
+// CompressThumbnail resizes and compresses an image to a thumbnail under maxKB
 func CompressThumbnail(fileHeader *multipart.FileHeader, img image.Image, maxKB int) ([]byte, string, error) {
 	var buf bytes.Buffer
 	ext := strings.ToLower(fileHeader.Filename)
 
-	// Resize smaller for thumbnail
-	thumb := resize.Resize(0, 256, img, resize.Lanczos3)
+	// --- Resize to thumbnail (height = 256, width scaled proportionally) ---
+	bounds := img.Bounds()
+	w := bounds.Dx()
+	h := bounds.Dy()
+
+	newH := 256
+	newW := w * newH / h
+
+	dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
+	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
+	thumb := dst
 
 	// --- If JPEG/JPG ---
 	if strings.HasSuffix(ext, ".jpg") || strings.HasSuffix(ext, ".jpeg") {
@@ -58,8 +68,6 @@ func CompressThumbnail(fileHeader *multipart.FileHeader, img image.Image, maxKB 
 	}
 
 	// --- If PNG ---
-	// PNG compression is lossless and won’t easily shrink to 10KB
-	// So either accept bigger size or convert to JPEG
 	buf.Reset()
 	err := png.Encode(&buf, thumb)
 	if err != nil {
