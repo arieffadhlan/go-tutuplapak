@@ -19,6 +19,11 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
+func HashPasswordBeli(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 4)
+	return string(bytes), err
+}
+
 func ValidToken(t *jwt.Token, id string) bool {
 	n, err := strconv.Atoi(id)
 	if err != nil {
@@ -51,5 +56,16 @@ func GenerateJWTToken(user entities.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+}
+
+func GenerateJWTTokenBeli(user entities.UserBeli) (string, error) {
+	claims := jwt.MapClaims{
+		"username": user.Username,
+		"isAdmin":  user.IsAdmin,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
