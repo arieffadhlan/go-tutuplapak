@@ -112,6 +112,32 @@ func IsAllowedFileType(fileName, fileType string) bool {
 	return true
 }
 
+func IsAllowedFileBeliType(fileName, fileType string) bool {
+	allowedMimeTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/jpg":  true,
+		// "application/octet-stream": true,
+	}
+
+	allowedExtensions := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+	}
+
+	if !allowedMimeTypes[fileType] {
+		return false
+	}
+
+	if fileType == "application/octet-stream" {
+		ext := strings.ToLower(filepath.Ext(fileName))
+		if !allowedExtensions[ext] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func AddFileNameSuffix(filename string) string {
 	ext := filepath.Ext(filename)
 	name := strings.TrimSuffix(filename, ext)
