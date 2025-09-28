@@ -23,7 +23,6 @@ CREATE TYPE product_category_enum AS ENUM (
 
 CREATE TABLE merchants (
     merchant_id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-    username TEXT NOT NULL REFERENCES users_beli(username) ON DELETE CASCADE,
     name VARCHAR(30) NOT NULL CHECK (char_length(name) >= 2),
     merchant_category merchant_category_enum NOT NULL,
     image_url TEXT NOT NULL,

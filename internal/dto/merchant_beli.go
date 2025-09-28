@@ -50,6 +50,40 @@ type (
 		Offset           int
 		SortCreatedAt    string // "asc" or "desc"
 	}
+
+	Item struct {
+		ItemId          string          `json:"itemId" db:"item_id"`
+		Name            string          `json:"name" db:"name"`
+		ProductCategory ProductCategory `json:"productCategory" db:"product_category"`
+		Price           int             `json:"price" db:"price"`
+		ImageURL        string          `json:"imageUrl" db:"image_url"`
+		CreateAt        time.Time       `json:"createdAt" db:"created_at"`
+	}
+
+	ItemCreateRequest struct {
+		Name            string          `json:"name" validate:"required,min=2,max=30"`
+		ProductCategory ProductCategory `json:"productCategory" validate:"required, oneof=Beverage Food Snack Condiments Additions"`
+		Price           int             `json:"price" validate:"required,min=1"`
+		ImageURL        string          `json:"imageUrl" validate:"required"`
+	}
+	ProductCategory string
+
+	ItemFilter struct {
+		ItemID          string
+		Limit           int
+		Offset          int
+		Name            string
+		ProductCategory string
+		SortCreatedAt   string // "asc" or "desc"
+	}
+
+	ItemCreateResponse struct {
+		ID string `json:"itemId"`
+	}
+	ListItemResponse struct {
+		Data []Item `json:"data"`
+		Meta Meta   `json:"meta"`
+	}
 )
 
 const (
@@ -59,4 +93,12 @@ const (
 	MerchandiseRestaurant MerchantCategory = "MerchandiseRestaurant"
 	BoothKiosk            MerchantCategory = "BoothKiosk"
 	ConvenienceStore      MerchantCategory = "ConvenienceStore"
+)
+
+const (
+	Beverage   ProductCategory = "Beverage"
+	Food       ProductCategory = "Food"
+	Snack      ProductCategory = "Snack"
+	Condiments ProductCategory = "Condiments"
+	Additions  ProductCategory = "Additions"
 )
